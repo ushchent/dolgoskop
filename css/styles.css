@@ -1,8 +1,34 @@
-main {
+header, main {
 	width: 80%;
 	margin: 0 auto;
 }
-
+h1 {
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+header p {
+  margin-top: 0.2em;
+  font-size: .8em;
+}
+.gray {
+	color: grey;
+}
 select:last-child {
 	margin-left: 1em
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: black;
+  shape-rendering: crispEdges;
+}
+.axis text {
+  font-size: .5em;
+}
+/* Линия на графике */
+.line {
+  fill: none;
+  stroke: black;
+  stroke-width: 1px;
 }
