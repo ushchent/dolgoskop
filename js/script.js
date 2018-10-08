@@ -32,7 +32,7 @@ const table_headers_map = {
     "3": "Дебиторская задолженность",
     "4": "Просроченная дебиторская задолженность"
 }
-// Не выводить месяцы вообще - только засечки.
+// Вариант - не выводить месяцы вообще - только засечки.
 const months_map = {
     "0": "I",
     "1": "II",
@@ -47,13 +47,16 @@ const months_map = {
     "11": "XII"
 };
 
+var t = d3.transition()
+		.duration(1000);
+
 var state_map = {
 	"region": "375",
 	"indicator": "1",
 	"type": "0",
 	"date": null
 };
-
+// Глобальные переменные
 var data_main, area_graph_group;
 
 // Карта предпросмотра с областями и Минском
@@ -79,7 +82,7 @@ var svg_width = d3.select("#svg_area").node().getBoundingClientRect().width;
 var y_scale = d3.scaleLinear()
                 .range([180, 10]);
 var x_scale = d3.scaleTime()
-                .range([0, svg_width / 3]);
+                .range([0, svg_width - (svg_width * 0.52)]);
 
 // Таблица
 var table = d3.select("main").append("table");
@@ -131,7 +134,6 @@ function initialize(data, map_data) {
         });
     data.sort(function(a, b) { return a["date"] - b["date"]; });
 	data_main = data;
-    console.log(data);
 
 // Создаем селекторы меню
     menu.append("select")
@@ -139,14 +141,15 @@ function initialize(data, map_data) {
 		.on("change", function(d) {
 			let selected_region = d3.select(this).node().value;
 			state_map["region"] = selected_region;
-			// redraw(data_main, state_map);
+			redraw_table();
+			redraw_graph();
 		})
     menu.append("select")
         .attr("id", "indicator_selector")
 		.on("change", function(d) {
 			let selected_indicator = d3.select(this).node().value;
 			state_map["indicator"] = selected_indicator;
-			// redraw(data_main, state_map);
+			redraw_graph();
 		})
 
     let dates_range = Array.from(new Set(data.map(function(d) {
@@ -163,13 +166,33 @@ function initialize(data, map_data) {
     grafik = svg_area.append("svg")
                 .attr("class", "grafik")
                 //.attr("width", "100%")
-                .attr("viewBox", "0 0 800 300")
+                .attr("viewBox", "0 0 800 220")
                 .attr("preserveAspectRatio", "xMidYMid meet");
 // График долга
     area_graph_group = grafik.append("g")
                 .attr("id", "area_graph")
-                .attr("transform", "translate(0, 0)");
+                .attr("transform", "translate(0, 0)")
 
+	area_graph_group.append("g")
+				.attr("class", "area")
+				.attr("transform", "translate(" + margins.left + ", 0)")
+				.append("path");
+
+	area_graph_group.append("g")
+        .attr("class", "line")
+        .attr("transform", "translate(" + margins.left + ", 0)")
+        .append("path");
+    area_graph_group
+        .append("g")
+        .attr("class", "circles")
+        .attr("transform", "translate(" + margins.left + ", 0)");
+
+    area_graph_group.append("g")
+        .attr("class", "x axis")
+        .attr("transform", "translate(" + margins.left + ", 180)");
+    area_graph_group.append("g")
+        .attr("class", "y axis")
+        .attr("transform", "translate(" + margins.left + ", 0)");
 // Карта предпросмотра
     let preview_map_group = grafik.append("g")
                     .attr("id", "preview_map")
@@ -240,25 +263,31 @@ function redraw_table() {
 				d.date.getTime() == state_map.date.getTime();
 	});
 
-	let table_headers = Array.from(new Set(table_data.map((d) => {
-		return d.ind;
-	})));
-	table_headers.sort((a, b) => { return a - b; });
+	let table_headers = Array.from(new Set(
+							table_data.map(d => d.ind)
+							)
+						);
+	table_headers.sort((a, b) => a - b);
 	table_headers.unshift("0");
 
 	let ths = thead.selectAll("th")
 		.data(table_headers);
 	ths.enter()
 		.append("th")
-		.text((d) => { return table_headers_map[d]; });
-	ths.text((d) => { return table_headers[d]; });
-	ths.exit().remove();
+		.transition(t)
+		.text(d => table_headers_map[d]);
+	ths.transition(t)
+		.text(d => table_headers_map[d]);
+	ths.exit()
+		.transition(t)
+		.remove();
 
 // Группировка данных для таблицы с сортировкой по видам деятельности
-	let row_data = d3.nest().key(function(d) { return d.type; }).sortKeys(d3.descending).sortValues(function(d) { return d.ind; }).entries(table_data);
+	let row_data = d3.nest().key(d => d.type)
+					.sortKeys(d3.descending)
+					.sortValues((a, b) => a.ind - b.ind)
+					.entries(table_data);
 
-	console.log("row_data", row_data);
-	
 	let trows = tbody.selectAll("tr")
 					.data(row_data);
 	trows.enter()
@@ -267,14 +296,16 @@ function redraw_table() {
 		.data(function(d) { return get_cell_data(d); })
 		.enter()
 		.append("td")
+		.transition(t)
 		.text(function(d) { return d; }); // Убрать текст из cell_data, добавить через function(d, i) ...
 
 	let tcells = trows.selectAll("td")
-					.data(function(d) { return get_cell_data(d); })
-					.text(function(d) { return d; });
+					.data(d => get_cell_data(d))
+					.text(d => d);
 	tcells.exit().remove();
-	trows.exit().remove();
-
+	trows.exit()
+		.transition(t)
+		.remove();
 }
 
 function redraw_graph() {
@@ -284,84 +315,79 @@ function redraw_graph() {
 			d.ind == state_map.indicator &&
 			d.type == state_map.type;
     });
-// Данные для таблицы
-    console.log("extent", d3.extent(grafik_data, function(d) { return +d.amount; }));
-    
+   console.log(grafik_data); 
+
     let dates_range = Array.from(new Set(grafik_data.map(function(d) {
                         return d["date"];
         }
     )));
+	dates_range.sort((a, b) => a.getTime() - b.getTime());
+	console.log(dates_range);
 // Создаем селекторы из данных
-    let region_codes = Array.from(new Set(data_main.filter(function(d) {
-        return d.type == state_map.type;
-    }).map(function(d) {
-        return d.region
-    })));
-    let indicator_codes = Array.from(new Set(data_main.map(function(d) {
-        return d.ind;
-    })));
-// Сортируем индикаторы
-	indicator_codes.sort(function(a, b) { return a - b; });
+    let region_codes = Array.from(new Set(data_main.filter(d => 
+			d.type == state_map.type).map(d => d.region)));
+    let indicator_codes = Array.from(new Set(data_main.map(d => d.ind)));
+// Сортируем регионы и индикаторы
+	indicator_codes.sort((a, b) => a - b);
+	region_codes.sort((a, b) => b - a);
 
-	menu.select("#region_selector")
+	let region_options = menu.select("#region_selector")
 		.selectAll("option")
         .data(region_codes)
-        .enter()
+	region_options.enter()
         .append("option")
 		.attr("value", function(d) { return d; })
         .text(function(d) { return regions_map[d] })
-	menu.select("#indicator_selector")
+	region_options.text(d => regions_map[d]);
+	region_options.exit()
+		.remove();
+
+	let indicator_options = menu.select("#indicator_selector")
 		.selectAll("option")
-        .data(indicator_codes)
-        .enter()
+        .data(indicator_codes);
+	indicator_options.enter()
         .append("option")
 		.attr("value", function(d) { return d; })
         .text(function(d) { return indicators_map[d] });
+	indicator_options.text(d => indicators_map[d]);
+	indicator_options.exit()
+		.remove();
 
     x_scale.domain([dates_range[0], dates_range[dates_range.length - 1]]);
+    //x_scale.domain(dates_range);
     y_scale.domain([0, d3.max(grafik_data, function(d) { return +d.amount; })]);
     
-    x_axis_group = d3.select("#area_graph").append("g")
-        .attr("class", "x axis")
-        .attr("transform", "translate(" + margins.left + ", 180)");
-    y_axis_group = d3.select("#area_graph").append("g")
-        .attr("class", "y axis")
-        .attr("transform", "translate(" + margins.left + ", 0)");
-    y_axis_group
-            .transition().duration(500)
+    area_graph_group.select(".y.axis")
+            .transition(t)
             .call(y_axis);
-    x_axis_group
-        .transition().duration(500)
+    area_graph_group.select(".x.axis")
+        .transition(t)
         .call(x_axis);
     
-    area_graph_group
-        .append("g")
-        .attr("class", "area")
-        .attr("transform", "translate(" + margins.left + ", 0)")
-        .append("path")
+    area_graph_group.select(".area path")
         .datum(grafik_data)
         .attr("fill", "steelblue")
         .attr("opacity", ".5")
         .attr("d", area);
-    area_graph_group
-        .append("g")
-        .attr("class", "line")
-        .attr("transform", "translate(" + margins.left + ", 0)")
-        .append("path")
-        .datum(grafik_data)
+	area_graph_group.select(".line path")
+		.datum(grafik_data)
         .attr("d", line);
     
-    area_graph_group
-        .append("g")
-        .attr("class", "circles")
-        .attr("transform", "translate(" + margins.left + ", 0)")
-        .selectAll("circle")
+    let circles = area_graph_group.select("g .circles")
+		.selectAll("circle")
         .data(grafik_data)
-        .enter()
+    circles.enter()
         .append("circle")
         .attr("cx", function(d) { return x_scale(d.date); })
         .attr("cy", function(d) { return y_scale(+d.amount); })
         .attr("r", "2");
+	circles.attr("cx", function(d) { return x_scale(d.date); })
+        .attr("cy", function(d) { return y_scale(+d.amount); })
+        .attr("r", "2");
+	circles.exit()
+		.transition(t)
+		.remove();
+
     //line_graph.transition().duration(500)
         //.attr("d", line(selected_data))
         //.attr("class", "line_graph");

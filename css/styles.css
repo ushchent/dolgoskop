@@ -1,6 +1,17 @@
-header, main {
+header, main, footer {
 	width: 80%;
 	margin: 0 auto;
+}
+footer {
+	font-size: .8em;
+	color: grey;
+}
+footer a {
+	color: gray;
+	text-decoration-style: dashed;
+}
+footer p {
+	padding-top: 2em;
 }
 h1 {
   margin-bottom: 0;
@@ -16,7 +27,7 @@ header p {
 select:last-child {
 	margin-left: 1em
 }
-
+// Элементы графика
 .axis path,
 .axis line {
   fill: none;
@@ -26,9 +37,17 @@ select:last-child {
 .axis text {
   font-size: .5em;
 }
-/* Линия на графике */
 .line {
   fill: none;
   stroke: black;
   stroke-width: 1px;
+}
+table {
+  font-size: .8em;
+}
+table td {
+  text-align: center;
+}
+table td:first-child, th:first-child {
+  text-align: left;
 }
