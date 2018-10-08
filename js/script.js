@@ -91,20 +91,16 @@ var thead = table.append("thead").append("tr");
 var tbody = table.append("tbody");
 
 var line = d3.line()
-            .x(function(d) {
-                return x_scale(d.date);
-            })
-            .y(function(d) { return y_scale(+d.amount); });
+            .x(d => x_scale(d.date))
+            .y(d => y_scale(+d.amount));
 
 var area = d3.area()
-            .x(function(d) {
-                return x_scale(d.date);
-            })
+            .x(d => x_scale(d.date))
             .y0(180)
-            .y1(function(d) { return y_scale(+d.amount); });
+            .y1(d => y_scale(+d.amount));
 
 var x_axis = d3.axisBottom(x_scale)
-                .tickFormat(function(d) { return format_tick(d); });
+                .tickFormat(d => format_tick(d));
 var y_axis = d3.axisLeft(y_scale)
                 .ticks(5)
             //.tickFormat(function(d) { return formatter(d); });
@@ -116,13 +112,14 @@ var color_map = {};
 
 // Отбор данных для ячеек таблицы по порядку
 function get_cell_data(row_data) {
-	let temp_arr = row_data.values.map((d) => { return d.amount; });
+	let temp_arr = row_data.values.map(d => d.amount);
 	temp_arr.unshift(areas_map[row_data.key]);
     return temp_arr;
 }
 
 function format_tick(datum) {
     let month = datum.getMonth();
+	console.log(datum);
     return month == 0 ? datum.getFullYear() : months_map[month];
 }
 
@@ -158,10 +155,6 @@ function initialize(data, map_data) {
 	
 	state_map["date"] = d3.max(dates_range);
 
-    amount_extent = d3.extent(data, function(d) { return +d.amount; });
-    
-    x_scale.domain([dates_range[0], dates_range[dates_range.length - 1]]);
-    y_scale.domain(amount_extent);
 
     grafik = svg_area.append("svg")
                 .attr("class", "grafik")
@@ -202,9 +195,7 @@ function initialize(data, map_data) {
     preview_map.data(map_data.features)
         .enter()
         .append("path")
-        .attr("id", function(d) {
-            return d.properties.subject; 
-        }) 
+        .attr("id", d => d.properties.subject) 
         .attr("d", preview_map_path)
         .attr("stroke", "black")
         .attr("stroke-width", "1px")
@@ -230,9 +221,7 @@ function initialize(data, map_data) {
         .attr("cx", function(d) {
             return preview_map_projection([27.5666, 53.9])[0];
         })
-        .attr("cy", function(d) {
-            return preview_map_projection([27.5666, 53.9])[1]; 
-        })
+        .attr("cy", d => preview_map_projection([27.5666, 53.9])[1])
         .attr("r", 12)
         .attr("fill", "white")
         .attr("stroke", "black")
@@ -249,7 +238,7 @@ function initialize(data, map_data) {
             d3.select("#amount")
                 .text(formatter(d));
         })
-        .on("mouseout", function(d) {
+        .on("mouseout", function() {
             d3.select("#preview_tooltip")
                 .classed("hidden", true)
         });
@@ -293,11 +282,11 @@ function redraw_table() {
 	trows.enter()
 		.append("tr")
 		.selectAll("td")
-		.data(function(d) { return get_cell_data(d); })
+		.data(d => get_cell_data(d))
 		.enter()
 		.append("td")
 		.transition(t)
-		.text(function(d) { return d; }); // Убрать текст из cell_data, добавить через function(d, i) ...
+		.text(d => d); // Убрать текст из cell_data, добавить через function(d, i) ...
 
 	let tcells = trows.selectAll("td")
 					.data(d => get_cell_data(d))
@@ -315,14 +304,12 @@ function redraw_graph() {
 			d.ind == state_map.indicator &&
 			d.type == state_map.type;
     });
-   console.log(grafik_data); 
 
     let dates_range = Array.from(new Set(grafik_data.map(function(d) {
                         return d["date"];
         }
     )));
 	dates_range.sort((a, b) => a.getTime() - b.getTime());
-	console.log(dates_range);
 // Создаем селекторы из данных
     let region_codes = Array.from(new Set(data_main.filter(d => 
 			d.type == state_map.type).map(d => d.region)));
@@ -336,8 +323,8 @@ function redraw_graph() {
         .data(region_codes)
 	region_options.enter()
         .append("option")
-		.attr("value", function(d) { return d; })
-        .text(function(d) { return regions_map[d] })
+		.attr("value", d => d)
+        .text(d => regions_map[d])
 	region_options.text(d => regions_map[d]);
 	region_options.exit()
 		.remove();
@@ -347,15 +334,15 @@ function redraw_graph() {
         .data(indicator_codes);
 	indicator_options.enter()
         .append("option")
-		.attr("value", function(d) { return d; })
-        .text(function(d) { return indicators_map[d] });
+		.attr("value", d => d)
+        .text(d => indicators_map[d]);
 	indicator_options.text(d => indicators_map[d]);
 	indicator_options.exit()
 		.remove();
 
     x_scale.domain([dates_range[0], dates_range[dates_range.length - 1]]);
-    //x_scale.domain(dates_range);
-    y_scale.domain([0, d3.max(grafik_data, function(d) { return +d.amount; })]);
+//x_scale.domain(dates_range.map(d => d.toISOString().slice(0,10)));
+    y_scale.domain([0, d3.max(grafik_data, d => +d.amount)]);
     
     area_graph_group.select(".y.axis")
             .transition(t)
@@ -375,23 +362,20 @@ function redraw_graph() {
     
     let circles = area_graph_group.select("g .circles")
 		.selectAll("circle")
-        .data(grafik_data)
+        .data(grafik_data);
+	circles.transition(t)
+		.attr("cx", d => x_scale(d.date))
+        .attr("cy", d => y_scale(+d.amount))
+        .attr("r", "2");
     circles.enter()
         .append("circle")
-        .attr("cx", function(d) { return x_scale(d.date); })
-        .attr("cy", function(d) { return y_scale(+d.amount); })
-        .attr("r", "2");
-	circles.attr("cx", function(d) { return x_scale(d.date); })
-        .attr("cy", function(d) { return y_scale(+d.amount); })
+		.transition(t)
+        .attr("cx", d => x_scale(d.date))
+        .attr("cy", d => y_scale(+d.amount))
         .attr("r", "2");
 	circles.exit()
 		.transition(t)
 		.remove();
-
-    //line_graph.transition().duration(500)
-        //.attr("d", line(selected_data))
-        //.attr("class", "line_graph");
-
 }
 
 d3.csv("data/data.csv", function(data) {
