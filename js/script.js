@@ -45,8 +45,9 @@ const table_headers_map = {
 const months_map_roman = {
     0: "I",
     1: "II",
-    3: "III",
-    4: "IV",
+    2: "III",
+    3: "IV",
+    4: "V",
     5: "VI",
     6: "VII",
     7: "VIII",
@@ -133,7 +134,7 @@ var svg_width = d3.select("#svg_area").node().getBoundingClientRect().width;
 var y_scale = d3.scaleLinear()
                 .range([180, 10]);
 var x_scale = d3.scaleTime()
-                .range([0, svg_width - (svg_width * 0.52)]);
+                .range([0, svg_width - (svg_width * 0.47)]);
 
 // Таблица
 var table = d3.select("main").append("table");
@@ -194,6 +195,7 @@ function initialize(data, map_data) {
             state_map["region"] = selected_region;
             redraw_table();
             redraw_graph();
+            redraw_map();
         })
     menu.append("select")
         .attr("id", "indicator_selector")
@@ -242,7 +244,7 @@ function initialize(data, map_data) {
 // Карта предпросмотра
     let preview_map_group = grafik.append("g")
                     .attr("id", "preview_map")
-                    .attr("transform", "translate(200, -140)");
+                    .attr("transform", "translate(215, -140)");
     let preview_map = preview_map_group.selectAll("path")
 // Вставляем карту
     preview_map.data(map_data.features)
@@ -441,14 +443,17 @@ function redraw_map() {
             if (state_map.region == "375") {
                 return preview_map_color(amounts_by_region[d.properties.subject]); 
             } else {
-                return "white"; 
+                return d.properties.subject == state_map.region ?
+                    "#bae4b3" : "white"; 
             }
         });
     d3.select("#minsk")
         .attr("fill", function(d) {
             if (state_map.region == "375") {
                 return preview_map_color(amounts_by_region["170"]); 
-            }   
+            } else {
+                return state_map.region == "170" ? "#bae4b3" : "white";
+            }  
         })
 }
 d3.csv("data/data.csv", function(data) {
