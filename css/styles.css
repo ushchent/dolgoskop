@@ -1,6 +1,7 @@
 header, main, footer {
-	width: 80%;
+	width: 90%;
 	margin: 0 auto;
+    font-family: sans-serif;
 }
 footer {
 	font-size: .8em;
@@ -24,9 +25,16 @@ header p {
 .gray {
 	color: grey;
 }
-select:last-child {
+#menu select {
+  	font-size: 1em;
+	background-color: white;
+	padding: .2em;
+}
+/*
+#menu select:last-child {
 	margin-left: 1em
 }
+*/
 // Элементы графика
 .axis path,
 .axis line {
@@ -37,17 +45,39 @@ select:last-child {
 .axis text {
   font-size: .5em;
 }
+.area path {
+    fill: #bae4b3;
+}
 .line {
   fill: none;
   stroke: black;
   stroke-width: 1px;
 }
+/* Оформление таблицы */
 table {
-  font-size: .8em;
+	border-collapse: collapse;
 }
-table td {
+table tr {
+  border-top: 1px solid #DEE2DE;
+}
+
+tbody {
   text-align: center;
 }
+tbody tr:hover {
+	background-color: #f7fcf5; 
+}
+
 table td:first-child, th:first-child {
   text-align: left;
 }
+table caption {
+    text-align: right;
+    color: grey;
+    font-size: .8em;
+}
+thead {
+  font-size: .9em;
+  font-weight: normal;
+}
+
