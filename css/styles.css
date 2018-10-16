@@ -3,13 +3,12 @@ header, main, footer {
 	margin: 0 auto;
     font-family: sans-serif;
 }
+main, #svg_area {
+    margin-top: 1em;
+}
 footer {
 	font-size: .8em;
 	color: grey;
-}
-footer a {
-	color: gray;
-	text-decoration-style: dashed;
 }
 footer p {
 	padding-top: 2em;
@@ -36,6 +35,18 @@ header p {
 }
 */
 // Элементы графика
+#circle_tooltip {
+  position: absolute;
+  width: auto;
+  height: auto;
+  padding: 5px;
+  background-color: white;
+  pointer-events: none;
+  border: 1px solid black;
+}
+.hidden {
+    display: none;
+}
 .axis path,
 .axis line {
   fill: none;
@@ -43,7 +54,7 @@ header p {
   shape-rendering: crispEdges;
 }
 .axis text {
-  font-size: .6em;
+  font-size: .7em;
 }
 .area path {
     fill: #bae4b3;
@@ -52,6 +63,11 @@ header p {
   fill: none;
   stroke: black;
   stroke-width: 1px;
+}
+#area_graph circle {
+    fill: white;
+    stroke: black;
+    stroke-width: 1px
 }
 /* Оформление таблицы */
 table {
@@ -64,10 +80,16 @@ table tr {
 tbody {
   text-align: center;
 }
-tbody tr:hover {
-	background-color: #f7fcf5; 
+tbody tr:hover:not(.active) {
+	background-color: #edf8e9; 
+    opacity: .8;
 }
-
+.text {
+    cursor: pointer;
+}
+.active {
+    background-color: #bae4b3;
+}
 table td:first-child, th:first-child {
   text-align: left;
 }

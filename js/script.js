@@ -110,7 +110,7 @@ function set_amounts_by_region() {
 }
 // Глобальные переменные
 var data_main, area_graph_group;
-
+var formatter = d3.format(",.1f");
 // Карта предпросмотра с областями и Минском
 var preview_map_projection = d3.geoMercator()
                    .center([27.9, 53.7])
@@ -134,7 +134,7 @@ var svg_width = d3.select("#svg_area").node().getBoundingClientRect().width;
 var y_scale = d3.scaleLinear()
                 .range([180, 10]);
 var x_scale = d3.scaleTime()
-                .range([0, svg_width - (svg_width * 0.47)]);
+                .range([0, svg_width - (svg_width * 0.49)]);
 
 // Таблица
 var table = d3.select("main").append("table");
@@ -152,6 +152,7 @@ var area = d3.area()
             .y1(d => y_scale(+d.amount));
 
 var x_axis = d3.axisBottom(x_scale)
+                .ticks(12)
                 .tickFormat(d => format_tick(d));
 var y_axis = d3.axisLeft(y_scale)
                 .ticks(5)
@@ -168,7 +169,7 @@ function get_cell_data(row_data) {
             temp_arr.push(0);
         }
     }
-    temp_arr.unshift(types_map[row_data.key]);
+    temp_arr.unshift(row_data.key);
     return temp_arr;
 }
 
@@ -255,22 +256,22 @@ function initialize(data, map_data) {
         .attr("stroke", "black")
         .attr("stroke-width", "1px")
         .attr("fill", "white")
-        .on("mouseover", function(d) {
-            let xPos = d3.event.pageX + "px";
-            let yPos = d3.event.pageY + "px";
-            d3.select("#preview_tooltip")
-                .style("left", xPos)
-                .style("top", yPos)
-                //.classed("hidden", false);  
-            d3.select("#region")    
-                .text(d.properties.region_name); 
-            d3.select("#amount")
-                .text(d.properties.amount);
-        })
-        .on("mouseout", function(d) {
-            d3.select("#preview_tooltip")
-                .classed("hidden", true)
-        });
+        //`.on("mouseover", function(d) {
+        //`    let xPos = d3.event.pageX + "px";
+        //`    let yPos = d3.event.pageY + "px";
+        //`    d3.select("#preview_tooltip")
+        //`        .style("left", xPos)
+        //`        .style("top", yPos)
+        //`        //.classed("hidden", false);  
+        //`    d3.select("#region")    
+        //`        .text(d.properties.region_name); 
+        //`    d3.select("#amount")
+        //`        .text(d.properties.amount);
+        //`})
+        //`.on("mouseout", function(d) {
+        //`    d3.select("#preview_tooltip")
+        //`        .classed("hidden", true)
+        //`});
 // Добавляем Минск
     preview_map_group.append("circle")
         .attr("cx", function(d) {
@@ -296,6 +297,9 @@ function initialize(data, map_data) {
             d3.select("#preview_tooltip")
                 .classed("hidden", true)
         });
+
+
+
 // Перерисовываем график, карту и таблицу
     redraw_graph();
     redraw_map();
@@ -303,7 +307,7 @@ function initialize(data, map_data) {
 }
 function redraw_table() {
     table.select("caption")
-        .text(parse_date_human(state_map.date));
+        .text(parse_date_human(state_map.date) + " BYN млн.");
 
     let table_data = data_main.filter((d) => {
         return d.region == state_map.region &&
@@ -339,20 +343,34 @@ function redraw_table() {
                     .data(row_data);
     trows.enter()
         .append("tr")
+        .attr("class", d => d.key == 0 ? "active" : null)
+        .on("click", function(d) {
+            state_map.type = d.key;
+            redraw_graph();
+            redraw_map();
+            d3.selectAll("tbody tr")
+                .classed("active", false);
+            d3.select(this)
+                .classed("active", true);
+        })
         .selectAll("td")
         .data(d => get_cell_data(d))
         .enter()
         .append("td")
+        .attr("class", (d, i) => i == 0 ? "text" : "number")
         .transition(t)
-        .text(d => d); // Убрать текст из cell_data, добавить через function(d, i) ...
+        .text((d, i) => i == 0 ? types_map[d] : formatter(d))
 
     let tcells = trows.selectAll("td")
                     .data(d => get_cell_data(d))
-                    .text(d => d);
+                    .text((d, i) => i == 0 ? types_map[d] : formatter(d));
     tcells.exit().remove();
     trows.exit()
         .transition(t)
         .remove();
+
+//d3.selectAll("tbody .text")
+//    .on("click", d => console.log(d));
 }
 
 function redraw_graph() {
@@ -422,13 +440,25 @@ function redraw_graph() {
     circles.transition(t)
         .attr("cx", d => x_scale(d.date))
         .attr("cy", d => y_scale(+d.amount))
-        .attr("r", "2");
     circles.enter()
         .append("circle")
+		//.on("mouseover", function(d) {
+	    //    var x_pos = d3.event.pageX + "px";
+		//	var y_pos = d3.event.pageY + "px";
+		//	d3.select("#circle_tooltip")
+		//	    .style("left", x_pos)
+		//		.style("top", y_pos)
+		//		.classed("hidden", false)  
+		//		.text(formatter(d.amount));
+		//})
+		//.on("mouseout", function(d) {
+    	//	d3.select("#circle_tooltip")
+    	//		.classed("hidden", true)
+        //})
         .transition(t)
         .attr("cx", d => x_scale(d.date))
         .attr("cy", d => y_scale(+d.amount))
-        .attr("r", "2");
+        .attr("r", "3");
     circles.exit()
         .transition(t)
         .remove();

@@ -6,16 +6,25 @@
     <link rel="stylesheet" href="css/bootstrap.min.css">
 	<link rel="stylesheet" href="css/styles.css">
 </head>
-<body class="container">
-	<header>
-        <h1>Долгоскоп</h1>
-		<p>Поиск территорий и отраслей экономики с
-		<span class="gray">не</span>благоприятной долговой динамикой</p>
-    </header>
-	<main></main>
-	<footer><p>Источник данных: <a href="http://belstat.gov.by">Белстат</a>.
-        <br>Редактор проекта Алексей Медвецкий, am@opendata.by.
-        <br>Статус: Прототип.</p></footer>
+<body>
+    <div class="container">
+        <header>
+            <h1>Долгоскоп</h1>
+            <p>Поиск территорий и отраслей экономики с
+            <span class="gray">не</span>благоприятной долговой динамикой</p>
+        </header>
+        <main>
+        </main>
+        <footer>
+            <p>Источник данных: <a href="http://belstat.gov.by">Белстат</a>.
+            <br>Репозиторий проекта: <a
+            href="https://github.com/ushchent/dolgoskop">github.com/ushchent/dolgoskop.</a>
+            <br>Редактор проекта: Алексей Медвецкий, am@opendata.by.
+            <br>Статус проекта: Прототип.</p>
+        </footer>
+        <div id="circle_tooltip" class="hidden"><p id="datum"></p></div>
+        <div id="map_tooltip" class="hidden"><p id="region"></p><p id="amount"></p></div>
+    </div>
 	<script src="js/d3.v4.min.js"></script>
 	<script src="js/script.js"></script>
 </body>
