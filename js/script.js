@@ -18,6 +18,8 @@ const indicators_map = {
     6: "Просроченная дебиторская задолженность",
     7: "Внешняя дебиторская задолженность",
     8: "Внешняя просроченная дебиторская задолженность",
+    9: "Задолженность по кредитам и займам",
+    10: "Просроченная задолженность по кредитам и займам"
 };
 const types_map = {
     0: "ВСЕГО",
@@ -40,6 +42,8 @@ const table_headers_map = {
     6: "Просроченная дебиторская задолженность",
     7: "Внешняя дебиторская задолженность",
     8: "Внешняя просроченная дебиторская задолженность",
+    9: "Задолженность по кредитам и займам",
+    10: "Просроченная задолженность по кредитам и займам"
 }
 // Вариант - не выводить месяцы вообще - только засечки.
 const months_map_roman = {
@@ -74,9 +78,7 @@ function parse_date_human(date) {
     let day_num = date.getDate();
     let month = date.getMonth();
     let year = date.getFullYear();
-    let date_string = "На " + day_num + " " +
-        months_map_cyrillic[month] + " " +
-        year + " г.";
+    let date_string = `На ${day_num} ${months_map_cyrillic[month]} ${year} г.`;
     return date_string;
 }
 var t = d3.transition()
@@ -210,7 +212,7 @@ function initialize(data, map_data) {
     let dates_range = Array.from(new Set(data.map(function(d) {
                         return d["date"]; }
     )));
-    
+
     state_map["date"] = d3.max(dates_range);
 
     grafik = svg_area.append("svg")
@@ -251,7 +253,7 @@ function initialize(data, map_data) {
     preview_map.data(map_data.features)
         .enter()
         .append("path")
-        .attr("id", d => d.properties.subject) 
+        .attr("id", d => d.properties.subject)
         .attr("d", preview_map_path)
         .attr("stroke", "black")
         .attr("stroke-width", "1px")
@@ -262,9 +264,9 @@ function initialize(data, map_data) {
         //`    d3.select("#preview_tooltip")
         //`        .style("left", xPos)
         //`        .style("top", yPos)
-        //`        //.classed("hidden", false);  
-        //`    d3.select("#region")    
-        //`        .text(d.properties.region_name); 
+        //`        //.classed("hidden", false);
+        //`    d3.select("#region")
+        //`        .text(d.properties.region_name);
         //`    d3.select("#amount")
         //`        .text(d.properties.amount);
         //`})
@@ -288,7 +290,7 @@ function initialize(data, map_data) {
                 .style("left", xPos)
                 .style("top", yPos)
                 .classed("hidden", false);
-            d3.select("#region")    
+            d3.select("#region")
                 .text("г. Минск");
             d3.select("#amount")
                 .text(formatter(d));
@@ -297,8 +299,6 @@ function initialize(data, map_data) {
             d3.select("#preview_tooltip")
                 .classed("hidden", true)
         });
-
-
 
 // Перерисовываем график, карту и таблицу
     redraw_graph();
@@ -368,7 +368,6 @@ function redraw_table() {
     trows.exit()
         .transition(t)
         .remove();
-
 //d3.selectAll("tbody .text")
 //    .on("click", d => console.log(d));
 }
@@ -387,7 +386,7 @@ function redraw_graph() {
     )));
     dates_range.sort((a, b) => a.getTime() - b.getTime());
 // Создаем селекторы из данных
-    let region_codes = Array.from(new Set(data_main.filter(d => 
+    let region_codes = Array.from(new Set(data_main.filter(d =>
             d.type == state_map.type).map(d => d.region)));
     let indicator_codes = Array.from(new Set(data_main.map(d => d.ind)));
 // Сортируем регионы и индикаторы
@@ -419,21 +418,21 @@ function redraw_graph() {
     x_scale.domain([dates_range[0], dates_range[dates_range.length - 1]]);
 //x_scale.domain(dates_range.map(d => d.toISOString().slice(0,10)));
     y_scale.domain([0, d3.max(grafik_data, d => +d.amount)]);
-    
+
     area_graph_group.select(".y.axis")
             .transition(t)
             .call(y_axis);
     area_graph_group.select(".x.axis")
         .transition(t)
         .call(x_axis);
-    
+
     area_graph_group.select(".area path")
         .datum(grafik_data)
         .attr("d", area);
     area_graph_group.select(".line path")
         .datum(grafik_data)
         .attr("d", line);
-    
+
     let circles = area_graph_group.select("g .circles")
         .selectAll("circle")
         .data(grafik_data);
@@ -442,18 +441,18 @@ function redraw_graph() {
         .attr("cy", d => y_scale(+d.amount))
     circles.enter()
         .append("circle")
-		//.on("mouseover", function(d) {
-	    //    var x_pos = d3.event.pageX + "px";
-		//	var y_pos = d3.event.pageY + "px";
-		//	d3.select("#circle_tooltip")
-		//	    .style("left", x_pos)
-		//		.style("top", y_pos)
-		//		.classed("hidden", false)  
-		//		.text(formatter(d.amount));
-		//})
-		//.on("mouseout", function(d) {
-    	//	d3.select("#circle_tooltip")
-    	//		.classed("hidden", true)
+        //.on("mouseover", function(d) {
+        //var x_pos = d3.event.pageX + "px";
+        //var y_pos = d3.event.pageY + "px";
+        //    d3.select("#circle_tooltip")
+        //        .style("left", x_pos)
+        //        .style("top", y_pos)
+        //        .classed("hidden", false)
+        //        .text(formatter(d.amount));
+        //})
+        //.on("mouseout", function(d) {
+        //    d3.select("#circle_tooltip")
+        //        .classed("hidden", true)
         //})
         .transition(t)
         .attr("cx", d => x_scale(d.date))
@@ -471,19 +470,19 @@ function redraw_map() {
         .transition(t)
         .attr("fill", function(d) {
             if (state_map.region == "375") {
-                return preview_map_color(amounts_by_region[d.properties.subject]); 
+                return preview_map_color(amounts_by_region[d.properties.subject]);
             } else {
                 return d.properties.subject == state_map.region ?
-                    "#bae4b3" : "white"; 
+                    "#bae4b3" : "white";
             }
         });
     d3.select("#minsk")
         .attr("fill", function(d) {
             if (state_map.region == "375") {
-                return preview_map_color(amounts_by_region["170"]); 
+                return preview_map_color(amounts_by_region["170"]);
             } else {
                 return state_map.region == "170" ? "#bae4b3" : "white";
-            }  
+            }
         })
 }
 d3.csv("data/data.csv", function(data) {
